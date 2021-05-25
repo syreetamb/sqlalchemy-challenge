@@ -10,7 +10,7 @@ from flask import Flask, jsonify
 
 engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
-Base = automap_base
+Base = automap_base()
 
 Base.prepare(engine, reflect=True)
 
@@ -41,6 +41,10 @@ def precipitation():
 
     session.close()
 
+    strDate = session.query(func.max(measurement.date)).first()[0]
+    lastDate = dt.datetime.strptime(strDate, '%Y-%m-%d')
+    prevYear = lastDate - dt.timedelta(366)
+
     all_prcp = []
     for date, prcp in results:
         prcp_dict ={}
@@ -63,6 +67,22 @@ def stations():
     all_stations = list(np.ravel(results))
 
     return jsonify(all_stations)
+
+
+@app.route("/api/v1.0/tobs")
+def tobs():
+
+    session = Session(engine)
+
+    results = session.query(measurement.date, measurement.tobs).filter(measurement.station == 'USC00519281').\
+            filter(measurement.date > prevYear).all()
+
+    session.close()
+
+    all_stations = list(np.ravel(results))
+
+    return jsonify(all_stations)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
