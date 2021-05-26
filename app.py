@@ -83,6 +83,23 @@ def tobs():
 
     return jsonify(all_stations)
 
+@app.route("/api/v1.0/temp/<start>")
+@app.route("/api/v1.0/temp/<start>/<end>")
+def stats(start=None, end=None):
+
+    session = Session(engine)
+
+    sel = [ func.min(measurement.tobs), 
+       func.max(measurement.tobs), 
+       func.avg(measurement.tobs)]
+
+    results = session.query(*sel).filter(measurement.date,start == "%Y-%m-%d").all()
+
+    session.close()
+
+    all_dates = list(np.ravel(results))
+
+    return jsonify(all_dates)
 
 if __name__ == "__main__":
     app.run(debug=True)
