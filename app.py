@@ -85,7 +85,7 @@ def tobs():
 
 @app.route("/api/v1.0/temp/<start>")
 @app.route("/api/v1.0/temp/<start>/<end>")
-def stats(start=None, end=None):
+def stats(start="%Y-%m-%d", end="%Y-%m-%d"):
 
     session = Session(engine)
 
@@ -93,13 +93,42 @@ def stats(start=None, end=None):
        func.max(measurement.tobs), 
        func.avg(measurement.tobs)]
 
-    results = session.query(*sel).filter(measurement.date,start == "%Y-%m-%d").all()
+    results = session.query(*sel).filter(measurement.date,start, end).all()
 
     session.close()
 
-    all_dates = list(np.ravel(results))
+    all_dates  = list(np.ravel(results))
 
     return jsonify(all_dates)
+
+@app.route("/api/v1.0/temp/<start>")
+def starts(start="%Y-%m-%d"):
+
+    session = Session(engine)
+
+    sel = [ func.min(measurement.tobs), 
+       func.max(measurement.tobs), 
+       func.avg(measurement.tobs)]
+
+    results = session.query(*sel).filter(measurement.date >= start).all()
+    
+    return jsonify(results)
+
+
+@app.route("/api/v1.0/temp/<start>/<end>")
+def startend(start="%Y-%m-%d", end="%Y-%m-%d"):
+
+    session = Session(engine)
+
+    sel = [ func.min(measurement.tobs), 
+       func.max(measurement.tobs), 
+       func.avg(measurement.tobs)]
+
+    results = session.query(*sel).filter(measurement.date>=start).filter(end>= measurement.date).all()
+
+    session.close()
+
+    return jsonify(results)
 
 if __name__ == "__main__":
     app.run(debug=True)
